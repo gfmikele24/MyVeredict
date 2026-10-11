@@ -10,6 +10,30 @@ const normalizeFilenamePart = (value: string) =>
 
 export const createImageFilename = (redCorner: string, blueCorner: string) => `myveredict-${normalizeFilenamePart(redCorner)}-vs-${normalizeFilenamePart(blueCorner)}.png`;
 
+const waitForImage = (image: HTMLImageElement) =>
+    new Promise<void>((resolve) => {
+        const finish = () => {
+            image.removeEventListener("error", finish);
+            image.removeEventListener("load", finish);
+            void Promise.resolve()
+                .then(() => image.decode?.())
+                .catch(() => undefined)
+                .then(resolve);
+        };
+
+        if (image.complete) {
+            finish();
+            return;
+        }
+
+        image.addEventListener("error", finish);
+        image.addEventListener("load", finish);
+    });
+
+export const waitForImages = async (images: Iterable<HTMLImageElement>) => {
+    await Promise.all(Array.from(images, waitForImage));
+};
+
 export const shareImageFile = async (file: File) => {
     if (!navigator.share || !navigator.canShare?.({ files: [file] })) {
         return false;
@@ -34,6 +58,7 @@ export const downloadPng = async (node: HTMLElement, filename: string) => {
     const previewWindow = isAppleMobile() && !canShareImage ? window.open("", "_blank") : null;
 
     await document.fonts?.ready;
+    await waitForImages(node.querySelectorAll("img"));
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 
     const { height, width } = node.getBoundingClientRect();

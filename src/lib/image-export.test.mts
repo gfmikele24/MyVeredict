@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { createImageFilename, shareImageFile } from "./image-export.ts";
+import { createImageFilename, shareImageFile, waitForImages } from "./image-export.ts";
 
 test("crea un nombre seguro para la tarjeta compartible", () => {
     assert.equal(createImageFilename("José Aldo", "Max/Holloway"), "myveredict-jose-aldo-vs-max-holloway.png");
@@ -18,6 +18,31 @@ test("la tarjeta compartible muestra el logo de MyVeredict", async () => {
 
     assert.match(summary, /alt="MyVeredict"/);
     assert.match(summary, /src="\/logo-mv\.png"/);
+});
+
+test("espera a que las imágenes terminen de cargar antes de exportar", async () => {
+    const image = new EventTarget() as EventTarget & Pick<HTMLImageElement, "complete" | "decode">;
+    let decodeCalls = 0;
+    let settled = false;
+
+    Object.assign(image, {
+        complete: false,
+        decode: async () => {
+            decodeCalls += 1;
+        },
+    });
+
+    const waiting = waitForImages([image as HTMLImageElement]).then(() => {
+        settled = true;
+    });
+
+    await Promise.resolve();
+    assert.equal(settled, false);
+
+    image.dispatchEvent(new Event("load"));
+    await waiting;
+
+    assert.equal(decodeCalls, 1);
 });
 
 test("comparte el archivo PNG cuando el navegador admite compartir archivos", async () => {
