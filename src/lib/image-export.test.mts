@@ -1,48 +1,72 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { createImageFilename, shareImageFile, waitForImages } from "./image-export.ts";
+import type { Translation } from "@/components/application/my-veredict/types";
+import type { Fight } from "@/lib/scoring";
+import { createImageFilename, getScorecardExportData, getScorecardPanelLayout, shareImageFile } from "./image-export.ts";
 
 test("crea un nombre seguro para la tarjeta compartible", () => {
     assert.equal(createImageFilename("José Aldo", "Max/Holloway"), "myveredict-jose-aldo-vs-max-holloway.png");
 });
 
-test("la tarjeta compartible no se coloca fuera del lienzo de exportación", async () => {
-    const summary = await readFile(new URL("../components/application/my-veredict/print-summary.tsx", import.meta.url), "utf8");
-
-    assert.doesNotMatch(summary, /left:\s*-10000/);
+test("centra una tarjeta más estrecha dentro del lienzo", () => {
+    assert.deepEqual(getScorecardPanelLayout(false), { height: 952, width: 900, x: 90, y: 64 });
 });
 
-test("la tarjeta compartible muestra el logo de MyVeredict", async () => {
-    const summary = await readFile(new URL("../components/application/my-veredict/print-summary.tsx", import.meta.url), "utf8");
+test("prepara filas y deducciones para el renderizador Canvas", () => {
+    const fight: Fight = {
+        rounds: [{ baseScore: "10-9", deduction: { corner: "red", points: 1 }, winner: "red" }],
+        setup: { blueCorner: "Azul", redCorner: "Rojo", rounds: 1 },
+    };
+    const t = {
+        blueCorner: "Esquina azul",
+        draw: "Empate",
+        finalVerdict: "Veredicto final",
+        noContest: "No contest",
+        redCorner: "Esquina roja",
+        winner: "Ganador",
+    } as Translation;
 
-    assert.match(summary, /alt="MyVeredict"/);
-    assert.match(summary, /src="\/logo-mv\.png"/);
+    const data = getScorecardExportData(fight, t);
+
+    assert.equal(data.compact, false);
+    assert.equal(data.resultName, "Empate");
+    assert.deepEqual(data.rows, [{ blue: 9, blueDeduction: 0, red: 10, redDeduction: 1, round: 1 }]);
 });
 
-test("espera a que las imágenes terminen de cargar antes de exportar", async () => {
-    const image = new EventTarget() as EventTarget & Pick<HTMLImageElement, "complete" | "decode">;
-    let decodeCalls = 0;
-    let settled = false;
+test("usa el diseño compacto a partir de ocho asaltos", () => {
+    const fight: Fight = {
+        rounds: Array.from({ length: 8 }, () => ({ baseScore: "10-9", winner: "blue" })),
+        setup: { blueCorner: "Azul", redCorner: "Rojo", rounds: 8 },
+    };
+    const t = { draw: "Empate", finalVerdict: "Veredicto final", winner: "Ganador" } as Translation;
 
-    Object.assign(image, {
-        complete: false,
-        decode: async () => {
-            decodeCalls += 1;
-        },
-    });
+    assert.equal(getScorecardExportData(fight, t).compact, true);
+});
 
-    const waiting = waitForImages([image as HTMLImageElement]).then(() => {
-        settled = true;
-    });
+test("prepara el método de finalización para el resumen y la tabla", () => {
+    const fight: Fight = {
+        ending: { method: "ko", round: 2, winner: "red" },
+        rounds: [{ baseScore: "10-9", winner: "red" }],
+        setup: { blueCorner: "Azul", redCorner: "Rojo", rounds: 12 },
+    };
+    const t = {
+        blueCorner: "Esquina azul",
+        deduction: "Deducción",
+        draw: "Empate",
+        finalVerdict: "Veredicto final",
+        ko: "KO",
+        noContest: "No contest",
+        noWinner: "Sin ganador",
+        redCorner: "Esquina roja",
+        round: "Ronda",
+        winner: "Ganador",
+    } as Translation;
 
-    await Promise.resolve();
-    assert.equal(settled, false);
+    const data = getScorecardExportData(fight, t);
 
-    image.dispatchEvent(new Event("load"));
-    await waiting;
-
-    assert.equal(decodeCalls, 1);
+    assert.equal(data.endingSummary, "KO · Ronda 2");
+    assert.equal(data.endingTableRow, "KO · Ronda 2 · Rojo");
+    assert.deepEqual(data.totals, { blue: 9, red: 10 });
 });
 
 test("comparte el archivo PNG cuando el navegador admite compartir archivos", async () => {
