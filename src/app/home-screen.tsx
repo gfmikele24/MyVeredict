@@ -4,7 +4,6 @@ import { FightEmptyState } from "@/components/application/my-veredict/fight-empt
 import { FightScorecard } from "@/components/application/my-veredict/fight-scorecard";
 import { FightSetupModal } from "@/components/application/my-veredict/fight-setup-modal";
 import { MyVeredictHeader } from "@/components/application/my-veredict/my-veredict-header";
-import { PrintSummary } from "@/components/application/my-veredict/print-summary";
 import { VerdictModal } from "@/components/application/my-veredict/verdict-modal";
 import { useFightSession } from "@/hooks/use-fight-session";
 import { useImageExport } from "@/hooks/use-image-export";
@@ -12,12 +11,11 @@ import { readFightSession, writeFightSession } from "@/lib/fight-persistence";
 import { detectLocale, translations, type Locale } from "@/lib/i18n";
 import { createImageFilename } from "@/lib/image-export";
 import type { BaseScore, Corner, FightEndMethod, FightSetup } from "@/lib/scoring";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 export const HomeScreen = () => {
     const { clearFight, fight, finishFight, isComplete, isHydrated, scoreRound, startFight } = useFightSession();
     const { error: imageExportError, exportImage, isExporting } = useImageExport();
-    const imageCardRef = useRef<HTMLElement>(null);
     const [locale, setLocale] = useState<Locale>("es");
     const [isSetupOpen, setIsSetupOpen] = useState(false);
     const [isVerdictOpen, setIsVerdictOpen] = useState(false);
@@ -125,7 +123,7 @@ export const HomeScreen = () => {
             return;
         }
 
-        void exportImage(imageCardRef.current, createImageFilename(fight.setup.redCorner, fight.setup.blueCorner));
+        void exportImage(fight, t, createImageFilename(fight.setup.redCorner, fight.setup.blueCorner));
     };
 
     const handleBackToHome = () => {
@@ -187,7 +185,6 @@ export const HomeScreen = () => {
                     t={t}
                 />
             )}
-            {fight && isComplete && <PrintSummary cardRef={imageCardRef} fight={fight} t={t} />}
         </>
     );
 };
