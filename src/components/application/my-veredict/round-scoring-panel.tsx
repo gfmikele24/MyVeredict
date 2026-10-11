@@ -12,6 +12,7 @@ interface RoundScoringPanelProps {
     endingMethod: FightEndMethod | null;
     endingWinner: Corner | null;
     fight: ActiveFight;
+    onBackToHome: () => void;
     onConfirm: () => void;
     onDeductionCornerChange: (corner: Corner | null) => void;
     onDeductionPointsChange: (points: 1 | 2) => void;
@@ -31,6 +32,7 @@ export const RoundScoringPanel = ({
     endingMethod,
     endingWinner,
     fight,
+    onBackToHome,
     onConfirm,
     onDeductionCornerChange,
     onDeductionPointsChange,
@@ -43,6 +45,7 @@ export const RoundScoringPanel = ({
     winner,
 }: RoundScoringPanelProps) => {
     const roundNumber = fight.rounds.length + 1;
+    const [isBackToHomeModalOpen, setIsBackToHomeModalOpen] = useState(false);
     const [isFinishModalOpen, setIsFinishModalOpen] = useState(false);
     const endingMethods = [
         { label: t.ko, value: "ko" },
@@ -82,9 +85,14 @@ export const RoundScoringPanel = ({
                     </p>
                     <h1 className="mt-1 text-xl font-semibold text-primary">{t.scoreRound}</h1>
                 </div>
-                <Button color="secondary" onPress={() => setIsFinishModalOpen(true)}>
-                    {t.endFight}
-                </Button>
+                <div className="flex flex-wrap justify-end gap-3">
+                    <Button color="secondary" onPress={() => setIsBackToHomeModalOpen(true)}>
+                        {t.restartFight}
+                    </Button>
+                    <Button color="secondary" onPress={() => setIsFinishModalOpen(true)}>
+                        {t.endFight}
+                    </Button>
+                </div>
             </div>
 
             <div className="mt-7">
@@ -180,6 +188,23 @@ export const RoundScoringPanel = ({
                             >
                                 {t.finishFight}
                             </Button>
+                        </div>
+                    </Dialog>
+                </Modal>
+            </ModalOverlay>
+
+            <ModalOverlay isOpen={isBackToHomeModalOpen} isDismissable onOpenChange={setIsBackToHomeModalOpen}>
+                <Modal className="max-w-lg">
+                    <Dialog aria-label={t.restartFightConfirmation}>
+                        <div className="p-5 sm:p-6">
+                            <h2 className="text-xl font-semibold text-primary">{t.restartFightConfirmation}</h2>
+                            <p className="mt-3 text-sm text-secondary">{t.restartFightWarning}</p>
+                        </div>
+                        <div className="flex justify-end gap-3 border-t border-secondary p-5">
+                            <Button color="secondary" onPress={() => setIsBackToHomeModalOpen(false)}>
+                                {t.cancel}
+                            </Button>
+                            <Button onPress={onBackToHome}>{t.confirmRestartFight}</Button>
                         </div>
                     </Dialog>
                 </Modal>
