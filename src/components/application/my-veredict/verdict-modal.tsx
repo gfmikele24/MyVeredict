@@ -1,7 +1,7 @@
 import { Dialog, Modal, ModalOverlay } from "@/components/application/modals/modal";
 import { Button } from "@/components/base/buttons/button";
 import { getVerdict } from "@/lib/scoring";
-import type { ActiveFight, Translation } from "./types";
+import { getEndMethodLabel, type ActiveFight, type Translation } from "./types";
 
 interface VerdictModalProps {
     exportError: boolean;
@@ -15,7 +15,7 @@ interface VerdictModalProps {
 
 export const VerdictModal = ({ exportError, fight, isExporting, isOpen, onDownloadImage, onOpenChange, t }: VerdictModalProps) => {
     const verdict = getVerdict(fight);
-    const winnerName = verdict.winner === "red" ? fight.setup.redCorner : verdict.winner === "blue" ? fight.setup.blueCorner : t.draw;
+    const resultName = fight.ending?.method === "no-contest" ? t.noContest : verdict.winner === "red" ? fight.setup.redCorner : verdict.winner === "blue" ? fight.setup.blueCorner : t.draw;
     const gradient = verdict.winner === "red" ? "linear-gradient(135deg, #7f1d1d, #ef4444)" : verdict.winner === "blue" ? "linear-gradient(135deg, #1e3a8a, #3b82f6)" : "linear-gradient(135deg, #374151, #9ca3af)";
 
     return (
@@ -24,7 +24,8 @@ export const VerdictModal = ({ exportError, fight, isExporting, isOpen, onDownlo
                 <Dialog aria-label={t.finalVerdict}>
                     <div className="p-8 text-center text-white" style={{ background: gradient }}>
                         <p className="text-sm font-medium text-white/75">{t.finalVerdict}</p>
-                        <h2 className="mt-2 text-3xl font-semibold">{winnerName}</h2>
+                        <h2 className="mt-2 text-3xl font-semibold">{resultName}</h2>
+                        {fight.ending && <p className="mt-2 text-sm font-medium text-white/75">{getEndMethodLabel(fight.ending.method, t)} · {t.round} {fight.ending.round}</p>}
                         <p className="mt-3 text-lg text-white/85">
                             {fight.setup.redCorner} {verdict.totals.red} — {verdict.totals.blue} {fight.setup.blueCorner}
                         </p>

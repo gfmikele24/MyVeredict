@@ -30,6 +30,8 @@ const isCorner = (value: unknown): value is Corner => value === "blue" || value 
 
 const isBaseScore = (value: unknown): value is BaseScore => value === "10-9" || value === "10-8" || value === "10-7";
 
+const isFightEndMethod = (value: unknown) => value === "ko" || value === "tko" || value === "submission" || value === "no-contest";
+
 const isRoundScore = (value: unknown): value is RoundScore => {
     if (!isRecord(value) || !isBaseScore(value.baseScore) || !isCorner(value.winner)) {
         return false;
@@ -46,13 +48,21 @@ const isRoundScore = (value: unknown): value is RoundScore => {
     );
 };
 
+const isFightEnding = (value: unknown, scoredRounds: number, configuredRounds: number) => {
+    if (!isRecord(value) || !isFightEndMethod(value.method) || !Number.isInteger(value.round) || value.round !== scoredRounds + 1 || value.round > configuredRounds) {
+        return false;
+    }
+
+    return value.method === "no-contest" ? value.winner === null : isCorner(value.winner);
+};
+
 const isFight = (value: unknown): value is Fight => {
     if (!isRecord(value) || !isRecord(value.setup) || !Array.isArray(value.rounds)) {
         return false;
     }
 
     const { blueCorner, redCorner, rounds } = value.setup;
-    return (
+    const isValidSetup =
         typeof blueCorner === "string" &&
         blueCorner.trim().length > 0 &&
         typeof redCorner === "string" &&
@@ -62,8 +72,13 @@ const isFight = (value: unknown): value is Fight => {
         rounds >= 1 &&
         rounds <= 12 &&
         value.rounds.length <= rounds &&
-        value.rounds.every(isRoundScore)
-    );
+        value.rounds.every(isRoundScore);
+
+    if (!isValidSetup) {
+        return false;
+    }
+
+    return value.ending === undefined || isFightEnding(value.ending, value.rounds.length, rounds);
 };
 
 const isRoundDraft = (value: unknown): value is RoundDraft =>

@@ -1,5 +1,5 @@
 import { getRoundPoints } from "@/lib/scoring";
-import type { ActiveFight, Translation } from "./types";
+import { getEndMethodLabel, type ActiveFight, type Translation } from "./types";
 
 interface RoundScoreTableProps {
     fight: ActiveFight;
@@ -29,6 +29,14 @@ export const RoundScoreTable = ({ fight, t }: RoundScoreTableProps) => (
                         </tr>
                     );
                 })}
+                {fight.ending && (
+                    <tr className="bg-secondary text-secondary">
+                        <td className="px-4 py-3 font-medium">{fight.ending.round}</td>
+                        <td className="px-4 py-3" colSpan={3}>
+                            {getEndMethodLabel(fight.ending.method, t)} · {fight.ending.method === "no-contest" ? t.noWinner : fight.ending.winner === "red" ? fight.setup.redCorner : fight.setup.blueCorner}
+                        </td>
+                    </tr>
+                )}
             </tbody>
         </table>
     </div>

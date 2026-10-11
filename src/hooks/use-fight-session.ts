@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { clearFightSession, createEmptyRoundDraft, readFightSession, writeFightSession } from "@/lib/fight-persistence";
-import type { Fight, FightSetup, RoundScore } from "@/lib/scoring";
-import { confirmRound, createFight, isFightComplete } from "@/lib/scoring";
+import type { Fight, FightEnd, FightSetup, RoundScore } from "@/lib/scoring";
+import { confirmRound, createFight, endFight, isFightComplete } from "@/lib/scoring";
 
 export const useFightSession = () => {
     const [fight, setFight] = useState<Fight | null>(null);
@@ -31,6 +31,16 @@ export const useFightSession = () => {
         writeFightSession({ draft: readFightSession()?.draft ?? createEmptyRoundDraft(), fight: nextFight });
     };
 
+    const finishFight = (ending: FightEnd) => {
+        if (!fight) {
+            throw new Error("No hay un combate activo");
+        }
+
+        const nextFight = endFight(fight, ending);
+        setFight(nextFight);
+        writeFightSession({ draft: createEmptyRoundDraft(), fight: nextFight });
+    };
+
     const clearFight = () => {
         clearFightSession();
         setFight(null);
@@ -38,6 +48,7 @@ export const useFightSession = () => {
 
     return {
         clearFight,
+        finishFight,
         fight,
         isComplete: fight ? isFightComplete(fight) : false,
         isHydrated,
