@@ -1,6 +1,6 @@
 import type { CSSProperties, Ref } from "react";
 import { getRoundPoints, getVerdict } from "@/lib/scoring";
-import type { ActiveFight, Translation } from "./types";
+import { getEndMethodLabel, type ActiveFight, type Translation } from "./types";
 
 interface PrintSummaryProps {
     cardRef: Ref<HTMLElement>;
@@ -10,7 +10,7 @@ interface PrintSummaryProps {
 
 export const PrintSummary = ({ cardRef, fight, t }: PrintSummaryProps) => {
     const verdict = getVerdict(fight);
-    const winnerName = verdict.winner === "red" ? fight.setup.redCorner : verdict.winner === "blue" ? fight.setup.blueCorner : t.draw;
+    const resultName = fight.ending?.method === "no-contest" ? t.noContest : verdict.winner === "red" ? fight.setup.redCorner : verdict.winner === "blue" ? fight.setup.blueCorner : t.draw;
     const compact = fight.rounds.length > 7;
     const cellStyle: CSSProperties = {
         borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
@@ -63,7 +63,8 @@ export const PrintSummary = ({ cardRef, fight, t }: PrintSummaryProps) => {
 
                 <div style={{ padding: compact ? "24px 0" : "36px 0", textAlign: "center" }}>
                     <p style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: compact ? 16 : 20, fontWeight: 700, letterSpacing: "0.18em", margin: 0, textTransform: "uppercase" }}>{verdict.winner ? t.winner : t.finalVerdict}</p>
-                    <h2 style={{ fontSize: compact ? 42 : 58, letterSpacing: "-0.04em", margin: `${compact ? 8 : 12}px 0 0` }}>{winnerName}</h2>
+                    <h2 style={{ fontSize: compact ? 42 : 58, letterSpacing: "-0.04em", margin: `${compact ? 8 : 12}px 0 0` }}>{resultName}</h2>
+                    {fight.ending && <p style={{ color: "rgba(255, 255, 255, 0.6)", fontSize: compact ? 16 : 20, fontWeight: 700, margin: `${compact ? 8 : 12}px 0 0`, textTransform: "uppercase" }}>{getEndMethodLabel(fight.ending.method, t)} · {t.round} {fight.ending.round}</p>}
                     <p style={{ color: "rgba(255, 255, 255, 0.8)", fontSize: compact ? 24 : 30, fontWeight: 700, margin: `${compact ? 10 : 16}px 0 0` }}>
                         <span style={{ color: "#f87171" }}>{verdict.totals.red}</span> — <span style={{ color: "#60a5fa" }}>{verdict.totals.blue}</span>
                     </p>
@@ -95,6 +96,13 @@ export const PrintSummary = ({ cardRef, fight, t }: PrintSummaryProps) => {
                                 </tr>
                             );
                         })}
+                        {fight.ending && (
+                            <tr style={{ background: "rgba(255, 255, 255, 0.06)", fontWeight: 700 }}>
+                                <td colSpan={5} style={{ ...cellStyle, color: "rgba(255, 255, 255, 0.75)" }}>
+                                    {getEndMethodLabel(fight.ending.method, t)} · {t.round} {fight.ending.round} · {fight.ending.method === "no-contest" ? t.noWinner : fight.ending.winner === "red" ? fight.setup.redCorner : fight.setup.blueCorner}
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                     <tfoot style={{ background: "rgba(255, 255, 255, 0.1)", fontSize: compact ? 20 : 24, fontWeight: 700 }}>
                         <tr>

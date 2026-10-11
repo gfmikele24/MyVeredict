@@ -1,5 +1,12 @@
 export type Corner = "blue" | "red";
 export type BaseScore = "10-9" | "10-8" | "10-7";
+export type FightEndMethod = "ko" | "tko" | "submission" | "no-contest";
+
+export type FightEnd =
+    | { method: "ko" | "tko" | "submission"; winner: Corner }
+    | { method: "no-contest"; winner: null };
+
+export type FightEnding = FightEnd & { round: number };
 
 export interface Deduction {
     corner: Corner;
@@ -19,6 +26,7 @@ export interface FightSetup {
 }
 
 export interface Fight {
+    ending?: FightEnding;
     setup: FightSetup;
     rounds: RoundScore[];
 }
@@ -57,11 +65,27 @@ export const getRoundPoints = (round: RoundScore): FightTotals => {
 };
 
 export const confirmRound = (fight: Fight, round: RoundScore): Fight => {
-    if (fight.rounds.length >= fight.setup.rounds) {
+    if (isFightComplete(fight)) {
         throw new Error("No quedan rondas por puntuar");
     }
 
     return { ...fight, rounds: [...fight.rounds, round] };
+};
+
+export const endFight = (fight: Fight, ending: FightEnd): Fight => {
+    if (isFightComplete(fight)) {
+        throw new Error("El combate ya ha terminado");
+    }
+
+    if (ending.method === "no-contest" && ending.winner !== null) {
+        throw new Error("NO_CONTEST_HAS_NO_WINNER");
+    }
+
+    if (ending.method !== "no-contest" && ending.winner === null) {
+        throw new Error("WINNER_REQUIRED");
+    }
+
+    return { ...fight, ending: { ...ending, round: fight.rounds.length + 1 } };
 };
 
 export const calculateTotals = (fight: Fight): FightTotals =>
@@ -75,9 +99,9 @@ export const calculateTotals = (fight: Fight): FightTotals =>
 
 export const getVerdict = (fight: Fight) => {
     const totals = calculateTotals(fight);
-    const winner: Corner | null = totals.blue === totals.red ? null : totals.blue > totals.red ? "blue" : "red";
+    const winner: Corner | null = fight.ending ? fight.ending.winner : totals.blue === totals.red ? null : totals.blue > totals.red ? "blue" : "red";
 
     return { totals, winner };
 };
 
-export const isFightComplete = (fight: Fight) => fight.rounds.length === fight.setup.rounds;
+export const isFightComplete = (fight: Fight) => Boolean(fight.ending) || fight.rounds.length === fight.setup.rounds;

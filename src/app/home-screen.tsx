@@ -11,11 +11,11 @@ import { useImageExport } from "@/hooks/use-image-export";
 import { readFightSession, writeFightSession } from "@/lib/fight-persistence";
 import { detectLocale, translations, type Locale } from "@/lib/i18n";
 import { createImageFilename } from "@/lib/image-export";
-import type { BaseScore, Corner, FightSetup } from "@/lib/scoring";
+import type { BaseScore, Corner, FightEndMethod, FightSetup } from "@/lib/scoring";
 import { useEffect, useRef, useState } from "react";
 
 export const HomeScreen = () => {
-    const { clearFight, fight, isComplete, isHydrated, scoreRound, startFight } = useFightSession();
+    const { clearFight, fight, finishFight, isComplete, isHydrated, scoreRound, startFight } = useFightSession();
     const { error: imageExportError, exportImage, isExporting } = useImageExport();
     const imageCardRef = useRef<HTMLElement>(null);
     const [locale, setLocale] = useState<Locale>("es");
@@ -25,6 +25,8 @@ export const HomeScreen = () => {
     const [baseScore, setBaseScore] = useState<BaseScore | null>(null);
     const [deductionCorner, setDeductionCorner] = useState<Corner | null>(null);
     const [deductionPoints, setDeductionPoints] = useState<1 | 2>(1);
+    const [endingMethod, setEndingMethod] = useState<FightEndMethod | null>(null);
+    const [endingWinner, setEndingWinner] = useState<Corner | null>(null);
     const [isDraftHydrated, setIsDraftHydrated] = useState(false);
     const t = translations[locale];
 
@@ -65,6 +67,8 @@ export const HomeScreen = () => {
         setBaseScore(null);
         setDeductionCorner(null);
         setDeductionPoints(1);
+        setEndingMethod(null);
+        setEndingWinner(null);
     };
 
     const handleStartFight = (setup: FightSetup) => {
@@ -94,6 +98,21 @@ export const HomeScreen = () => {
         if (isLastRound) {
             setIsVerdictOpen(true);
         }
+    };
+
+    const handleFinishFight = () => {
+        if (!fight || !endingMethod || (endingMethod !== "no-contest" && !endingWinner)) {
+            return;
+        }
+
+        if (endingMethod === "no-contest") {
+            finishFight({ method: endingMethod, winner: null });
+        } else if (endingWinner) {
+            finishFight({ method: endingMethod, winner: endingWinner });
+        }
+
+        resetRoundForm();
+        setIsVerdictOpen(true);
     };
 
     const handleLocaleChange = (nextLocale: Locale) => {
@@ -132,6 +151,8 @@ export const HomeScreen = () => {
                             baseScore={baseScore}
                             deductionCorner={deductionCorner}
                             deductionPoints={deductionPoints}
+                            endingMethod={endingMethod}
+                            endingWinner={endingWinner}
                             exportError={imageExportError}
                             fight={fight}
                             isComplete={isComplete}
@@ -141,6 +162,9 @@ export const HomeScreen = () => {
                             onDeductionPointsChange={setDeductionPoints}
                             onBackToHome={handleBackToHome}
                             onDownloadImage={handleImageDownload}
+                            onEndingMethodChange={setEndingMethod}
+                            onEndingWinnerChange={setEndingWinner}
+                            onFinishFight={handleFinishFight}
                             onScoreChange={setBaseScore}
                             onWinnerChange={setWinner}
                             t={t}
