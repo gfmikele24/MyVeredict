@@ -85,6 +85,7 @@ export const FightScorecard = ({
                         endingMethod={endingMethod}
                         endingWinner={endingWinner}
                         fight={fight}
+                        onBackToHome={onBackToHome}
                         onConfirm={onConfirmRound}
                         onDeductionCornerChange={onDeductionCornerChange}
                         onDeductionPointsChange={onDeductionPointsChange}

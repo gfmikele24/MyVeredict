@@ -54,7 +54,16 @@ export const PrintSummary = ({ cardRef, fight, t }: PrintSummaryProps) => {
                         <span style={{ color: "#f87171", fontSize: compact ? 15 : 18, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase" }}>{t.redCorner}</span>
                         <strong style={{ display: "block", fontSize: compact ? 28 : 36, marginTop: compact ? 8 : 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fight.setup.redCorner}</strong>
                     </div>
-                    <h1 style={{ flexShrink: 0, fontSize: compact ? 24 : 30, letterSpacing: "-0.04em", margin: 0 }}>MyVeredict</h1>
+                    <img
+                        alt="MyVeredict"
+                        src="/logo-mv.png"
+                        style={{
+                            flexShrink: 0,
+                            height: compact ? 52 : 76,
+                            objectFit: "contain",
+                            width: compact ? 78 : 114,
+                        }}
+                    />
                     <div style={{ flex: 1, minWidth: 0, textAlign: "right" }}>
                         <span style={{ color: "#60a5fa", fontSize: compact ? 15 : 18, fontWeight: 700, letterSpacing: "0.22em", textTransform: "uppercase" }}>{t.blueCorner}</span>
                         <strong style={{ display: "block", fontSize: compact ? 28 : 36, marginTop: compact ? 8 : 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{fight.setup.blueCorner}</strong>

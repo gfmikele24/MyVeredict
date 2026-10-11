@@ -9,9 +9,12 @@ interface MyVeredictHeaderProps {
 
 export const MyVeredictHeader = ({ locale, onLocaleChange, t }: MyVeredictHeaderProps) => (
     <header className="mb-10 flex items-center justify-between gap-4">
-        <div>
-            <p className="text-sm font-semibold tracking-wide text-brand-secondary uppercase">MyVeredict</p>
-            <p className="mt-1 text-sm text-tertiary">{t.appDescription}</p>
+        <div className="flex items-center gap-3">
+            <img src="/logo-mv.png" alt="MyVeredict" className="size-12 object-contain" />
+            <div>
+                <p className="text-sm font-semibold tracking-wide text-brand-secondary uppercase">MyVeredict</p>
+                <p className="mt-1 text-sm text-tertiary">{t.appDescription}</p>
+            </div>
         </div>
         <div className="flex rounded-lg bg-primary p-1 shadow-xs ring-1 ring-secondary">
             {(["es", "en"] as const).map((item) => (
